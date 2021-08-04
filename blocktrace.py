@@ -31,9 +31,48 @@ import hashlib
 from pathlib import *
 from deepdiff import DeepDiff
 class BlockTrace(tracewrapper.TracerClass):
+    """
+    Blockchain applied to Trace in order to develop trust between applications
+    """
     iter=0
     __cantrace__=False
-    def __init__(self, _each_block_hook=None, _genesis="Genesis", _hash="sha1", _globals="On", _locals="On", _builtins="Off", _pathelements=0, _trace_lines=True, _trace_opcodes=False, _new_hash=True, **_deepdiff):
+    def __init__(self, _each_block_hook=None, _genesis="Genesis", _hash="sha1", _globals="On", _locals="On", _builtins="Off",
+                 _pathelements=0, _trace_lines=True, _trace_opcodes=False, _new_hash=True, **_deepdiff):
+        """
+        Initialise BlockTrace
+
+        Parameters:
+            _each_block_hook default None
+                Hook to a procedure/method to call after each block is generated.
+                Hook parameters are block number and the block itself
+            _genesis default "Genesis"
+                sample text supplied for tyhe initial block this might be a token supplied by a 3rd party or
+                it could be just simple plain text.
+            _hash default "sha1"
+                The hashing algorithm to be used in signing each block.  Any algorithm on Hashlib's guaranteed
+                list is supported (though we recommend against using md5 as the implementations are not guaranteed
+                across all platforms)
+            _globals default "On" (Case insensitive)
+                Trace global variables options "On", "Off", "Changes"
+                    Note if "Changes" is specified changes will be tracked with Deepdiff
+                    https://deepdiff.readthedocs.io/en/latest/ all DeepDiff options are supported
+            _locals default "On" (Case insensitive)
+                Trace local variables options "On", "Off", "Changes"
+                    Note if "Changes" is specified changes will be tracked with Deepdiff
+                    https://deepdiff.readthedocs.io/en/latest/ all DeepDiff options are supported
+            _builtins default "On" (Case insensitive)
+                Trace builtins options "On", "Off", "Changes"
+                    Note if "Changes" is specified changes will be tracked with Deepdiff
+                    https://deepdiff.readthedocs.io/en/latest/ all DeepDiff options are supported
+            _pathelements default 0
+                How many path elements (directories) to include with modules
+            _trace_lines default True
+                Turn on sys.trace's tracelines
+            _trace_opcodes default False
+                Turn on sys.trace's traceopcodes
+            _new_hash default true
+                Generate a new instance of hashlib for every block
+        """
         self.iter=0
         self.block={}
         self.globs={}
@@ -68,7 +107,8 @@ class BlockTrace(tracewrapper.TracerClass):
         self.tw.add(self.trace)
 
     def verifyblock(self, _block, _previous_hash):
-        """Verifies a block given it's previous hash.
+        """
+        Verifies a block given it's previous hash.
         note: Will only work if blocktrace is instanciated with _new_hash set to true
         """
         hash=_block["Hash"]
@@ -107,11 +147,17 @@ class BlockTrace(tracewrapper.TracerClass):
 
 
     def hashlibwrapper(self,_hash):
+        """
+        Wrapper for hashlib
+        """
         if not _hash in hashlib.algorithms_guaranteed:
             raise LookupError(_hash+" is not a supported algorithm")
         return getattr(hashlib,_hash)
 
     def serialisedict(self, _object):
+        """
+        Strips out unserialisable data from _object
+        """
         target={}
         for k, v in _object.items():
             try:
@@ -122,10 +168,19 @@ class BlockTrace(tracewrapper.TracerClass):
 
         return target
     def start(self):
+        """
+        Start tracing
+        """
         self.tw.start()
     def stop(self):
+        """
+        Stop tracing
+        """
         self.tw.stop()
     def trace(self, frame, event, arg):
+        """
+        Hook for tracewrapper https://github.com/BigIan1969/Tracewrapper
+        """
         #Serialise Globals
         self.iter+=1
         globs=self.serialisedict(frame.f_globals)
