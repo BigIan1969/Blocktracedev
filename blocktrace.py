@@ -20,7 +20,6 @@
 #OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #SOFTWARE.
 
-import sample
 from tracewrapper import tracewrapper
 import opcode
 import sys
@@ -36,8 +35,8 @@ class BlockTrace(tracewrapper.TracerClass):
     """
     iter=0
     __cantrace__=False
-    def __init__(self, _each_block_hook=None, _genesis="Genesis", _hash="sha1", _globals="On", _locals="On", _builtins="Off",
-                 _pathelements=0, _trace_lines=True, _trace_opcodes=False, _new_hash=True, **_deepdiff):
+    def __init__(self, _genesis="Genesis", _hash="sha1", _globals="On", _locals="On", _builtins="Off",
+                 _pathelements=0, _trace_lines=True, _trace_opcodes=False, _new_hash=True,_each_block_hook=None,  **_deepdiff):
         """
         Initialise BlockTrace
 
@@ -242,11 +241,3 @@ class BlockTrace(tracewrapper.TracerClass):
 
 
         return self.trace
-
-#tc=BlockTrace("Test",_globals='changes',_locals="changes",_builtins="changes")
-#tracer=tracewrapper.tracewrapper(_trace_opcodes=False)
-#tracer.add(tc.trace)
-#tc.start()
-#tracer.start()
-#test.fib(3)
-#tracer.stop()
