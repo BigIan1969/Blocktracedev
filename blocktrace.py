@@ -35,8 +35,8 @@ class BlockTrace(tracewrapper.TracerClass):
     """
     iter=0
     __cantrace__=False
-    def __init__(self, _genesis="Genesis", _hash="sha1", _globals="On", _locals="On", _builtins="Off",
-                 _pathelements=0, _trace_lines=True, _trace_opcodes=False, _new_hash=True,_each_block_hook=None,  **_deepdiff):
+    def __init__(self, _genesis="Genesis", *, _hash="sha1", _globals="On", _locals="On", _builtins="Off",
+                 _pathelements=0, _trace_lines=True, _trace_opcodes=False, _new_hash=True, _each_block_hook=None,  **_deepdiff):
         """
         Initialise BlockTrace
 

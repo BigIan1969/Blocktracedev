@@ -13,16 +13,16 @@ class test(unittest.TestCase):
         inst1.stop()
         for n, b in inst1.block.items():
             if not n==0:
-              hash=b["Hash"]
+              thash=b["Hash"]
               b["Hash"]=inst1.block[n-1]["Hash"]
               hlib=hashlib.sha1()
               hlib.update(bytes(json.dumps(b), 'utf-8'))
               try:
                   newhash=hlib.hexdigest()
-              except:
+              except AssertionError:
                   newhash=hlib.hexdigest(20)
-              assert hash==newhash, f"Hashes are not equal for block {n} old hash= {hash} new hash = {newhash}"
-              b["Hash"]=hash
+              assert thash==newhash, f"Hashes are not equal for block {n} old hash= {hash} new hash = {newhash}"
+              b["Hash"]=thash
 
     def test_verifyblockstandalone(self):
         inst1 = btrace.BlockTrace()
@@ -39,7 +39,7 @@ class test(unittest.TestCase):
         inst2 = btrace.BlockTrace()
         result=inst2.verifychain(inst1.block)
 
-        assert result=="" or result==None, result
+        assert result=="" or result is None, result
 
         inst3 = btrace.BlockTrace(_new_hash=False)
         inst3.start()
@@ -48,7 +48,7 @@ class test(unittest.TestCase):
         inst4 = btrace.BlockTrace(_new_hash=False)
         result=inst4.verifychain(inst3.block)
 
-        assert result=="" or result==None, result
+        assert result=="" or result is None, result
 
     def test_verifyhook(self):
         inst1 = btrace.BlockTrace(_each_block_hook=testhook)
