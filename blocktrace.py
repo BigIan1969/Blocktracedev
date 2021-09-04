@@ -27,7 +27,7 @@ import linecache
 import json
 from datetime import datetime
 import hashlib
-from pathlib import *
+from pathlib import Path
 from deepdiff import DeepDiff
 class BlockTrace(tracewrapper.TracerClass):
     """
@@ -99,7 +99,7 @@ class BlockTrace(tracewrapper.TracerClass):
         self.hash.update(bytes(json.dumps(self.block[self.iter]), 'utf-8'))
         try:
             self.block[self.iter]["Hash"]=self.hash.hexdigest()
-        except:
+        except TypeError:
             self.block[self.iter]["Hash"]=self.hash.hexdigest(20)
         self.tw=tracewrapper.tracewrapper(_trace_lines=_trace_lines, _trace_opcodes=_trace_opcodes)
         self.tw.add_module_exclusion("blocktrace.py")
@@ -110,34 +110,34 @@ class BlockTrace(tracewrapper.TracerClass):
         Verifies a block given it's previous hash.
         note: Will only work if blocktrace is instanciated with _new_hash set to true
         """
-        hash=_block["Hash"]
+        lhash=_block["Hash"]
         cpy=_block.copy()
         cpy["Hash"]=_previous_hash
         hlib=self.hashlibwrapper(self._hash)()
         hlib.update(bytes(json.dumps(cpy), 'utf-8'))
         try:
           newhash=hlib.hexdigest()
-        except:
+        except TypeError:
           newhash=hlib.hexdigest(20)
-        return hash==newhash
+        return lhash==newhash
     def verifychain(self,_block):
         """
         Verify Blockchain from the start
         """
         for n, b in _block.items():
             if not n==0:
-              hash=b["Hash"]
+              lhash=b["Hash"]
               b["Hash"]=_block[n-1]["Hash"]
               if self._new_hash:
                   self.hash=self.hashlibwrapper(self._hash)()
               self.hash.update(bytes(json.dumps(b), 'utf-8'))
               try:
                   newhash=self.hash.hexdigest()
-              except:
+              except TypeError:
                   newhash=self.hash.hexdigest(20)
-              if hash!=newhash:
+              if lhash!=newhash:
                   return f"Hashes are not equal for block {n} old hash= {hash} new hash = {newhash} _new_hash={self._new_hash}"
-              b["Hash"]=hash
+              b["Hash"]=lhash
             else:
               cpy=b.copy()
               del cpy["Hash"]
@@ -190,7 +190,7 @@ class BlockTrace(tracewrapper.TracerClass):
             built.append(k)
 
         #get locals
-        locals=self.serialisedict(frame.f_locals)
+        local=self.serialisedict(frame.f_locals)
 
         code = frame.f_code
         offset = frame.f_lasti
@@ -211,9 +211,9 @@ class BlockTrace(tracewrapper.TracerClass):
                 block["Builtins"]=built
         if self._locals.upper() in ["ON", "CHANGES"]:
             if self._locals.upper()=="CHANGES":
-                block["Locals"]=DeepDiff(self.locals.items(),locals.items(),**self._deepdiff)
+                block["Locals"]=DeepDiff(self.locals.items(),local.items(),**self._deepdiff)
             else:
-                block["Locals"]=locals
+                block["Locals"]=local
         block["Line Text"]=ln
         block["Event"]=event
         block["Arg"]=arg
@@ -228,13 +228,13 @@ class BlockTrace(tracewrapper.TracerClass):
         self.hash.update(bytes(json.dumps(block), 'utf-8'))
         try:
             block["Hash"]=self.hash.hexdigest()
-        except:
+        except TypeError:
             block["Hash"]=self.hash.hexdigest(20)
 
         self.block[self.iter]=block
         self.globs=globs
         self.built=built
-        self.locals=locals
+        self.locals=local
 
         if self._each_block_hook is not None:
             self._each_block_hook(self.iter, block)
