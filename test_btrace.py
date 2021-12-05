@@ -56,6 +56,37 @@ class test(unittest.TestCase):
         sample.fib(50)
         inst1.stop()
 
+    def test_verifycodeignored(self):
+        inst1 = btrace.BlockTrace()
+        inst1.start()
+        sample.fib(50)
+        inst1.stop()
+        for blockno, block in inst1.block.items():
+            if not blockno==0:
+                if block["Line No"]==12:
+                    assert block["Line Text"]=="[OBFUSCATED]", block["Line Text"]
+                assert "#SHOULD NOT BE ABLE TO SEE THIS LINE" not in block["Line Text"], block["Line Text"]
+
+    def test_verifyglobalignored(self):
+        inst1 = btrace.BlockTrace()
+        inst1.start()
+        sample.fib(50)
+        inst1.stop()
+        for blockno, block in inst1.block.items():
+            if not blockno==0:
+                if "globvar" in block["Globals"]:
+                    assert block["Globals"]["globvar"]=="[OBFUSCATED]", block["Globals"]["globvar"]
+
+    def test_verifylocalignored(self):
+        inst1 = btrace.BlockTrace()
+        inst1.start()
+        sample.fib(50)
+        inst1.stop()
+        for blockno, block in inst1.block.items():
+            if not blockno==0:
+                if "localvar" in block["Locals"]:
+                    assert block["Locals"]["localvar"]=="[OBFUSCATED]", block["locals"]["localvar"]
+
 #Dependencies
 
 def testhook(_iter, _block):

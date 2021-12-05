@@ -87,6 +87,9 @@ class BlockTrace(tracewrapper.TracerClass):
         self.block[self.iter]["DateTime"]=datetime.now().strftime("%d/%m/%Y, %H:%M:%S.%f")
         self._deepdiff=_deepdiff
         self._each_block_hook=_each_block_hook
+        self.ignorecode={}
+        self.ignoreglobal=[]
+        self.ignorelocal=[]
 
         if _globals.upper() in ["ON", "CHANGES"]:
             self.block[self.iter]["Globals"]=self.globs
@@ -195,6 +198,36 @@ class BlockTrace(tracewrapper.TracerClass):
         code = frame.f_code
         offset = frame.f_lasti
         ln= linecache.getline(code.co_filename, frame.f_lineno).strip()
+        prevln= linecache.getline(code.co_filename, frame.f_lineno-1).strip()
+        if prevln.ljust(5).upper()[0:5]=="#*BTC": #Blocktrace inline commands
+            btc =prevln.split(" ")
+            btc.pop(0) # remove "#*BTC"
+
+            if btc[0].upper() == "IGNORENEXT":
+                #Ignore the next line of code
+                if not Path(code.co_filename).name in self.ignorecode:
+                    self.ignorecode[Path(code.co_filename).name]=[]
+                self.ignorecode[Path(code.co_filename).name].append(frame.f_lineno)
+            elif btc[0].upper() == "IGNOREGLOBAL":
+                #Add Global Variable to the ignore list
+                if not btc[1] in self.ignoreglobal:
+                    self.ignoreglobal.append(btc[1])
+
+            elif btc[0].upper() == "IGNORELOCAL":
+                #Add Local Variable to the ignore list
+                if not btc[1] in self.ignorelocal:
+                    self.ignorelocal.append(btc[1])
+
+        if Path(code.co_filename).name in self.ignorecode:
+            if frame.f_lineno in self.ignorecode[Path(code.co_filename).name]:
+                ln="[OBFUSCATED]"
+        for localvar in self.ignorelocal:
+            if localvar in local:
+                local[localvar]="[OBFUSCATED]"
+
+        for globalvar in self.ignoreglobal:
+            if globalvar in globs:
+                globs[globalvar]="[OBFUSCATED]"
 
         block={}
         block["DateTime"]=datetime.now().strftime("%d/%m/%Y, %H:%M:%S.%f")
